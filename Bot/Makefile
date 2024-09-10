@@ -5,7 +5,7 @@ include $(PWD)/Platform/$(PLATFORM).mk
 .PHONY: all clean
 .SUFFIXES: .c .o
 
-OBJS = main.o ircfw.o
+OBJS = main.o ircfw.o bot.o util.o news.o
 
 all: okuu$(EXEC)
 
