@@ -111,6 +111,7 @@ void ok_bot(void){
 	ircfw_socket_send_cmd(ok_sock, NULL, construct);
 
 	bool is_in = false;
+	bool sendable = false;
 
 	struct pollfd pollfds[1];
 	pollfds[0].fd = ok_sock;
@@ -131,6 +132,10 @@ void ok_bot(void){
 			if(n >= 0){
 				int i;
 				for(i = 0; i < n; i++){
+					if(!sendable){
+						free(list[i]);
+						continue;
+					}
 					if(count <= atoi(list[i]->d_name)){
 						sprintf(construct, "%s/%s", nntppath, list[i]->d_name);
 						if(ok_news_read(construct) == 0){
@@ -192,6 +197,8 @@ void ok_bot(void){
 				fprintf(stderr, "Login successful\n");
 				sprintf(construct, "JOIN :%s", ircchan);
 				ircfw_socket_send_cmd(ok_sock, NULL, construct);
+			}else if(res == 331 || res == 332){
+				sendable = true;
 			}
 		}else{
 			if(strcasecmp(ircfw_message.command, "PING") == 0){
