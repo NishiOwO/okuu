@@ -325,6 +325,9 @@ int ok_news_write(const char* nick, const char* message){
 				send(nt_sock, ".\r\n", 3, 0);
 				sta = ok_news_parse(nt_sock);
 				if(sta != 240) goto cleanup;
+				send(nt_sock, "QUIT\r\n", 6, 0);
+				sta = ok_news_parse(nt_sock);
+				if(sta != 205) goto cleanup;
 			}else{
 				goto cleanup;
 			}
