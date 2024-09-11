@@ -143,31 +143,33 @@ void ok_bot(void){
 					}
 					if(count <= atoi(list[i]->d_name)){
 						sprintf(construct, "%s/%s", nntppath, list[i]->d_name);
-						if(ok_news_read(construct) == 0 && strcmp(news_entry.from, nntpfrom) != 0){
-							char* tmp = ok_strcat3("PRIVMSG ", ircchan, " :\x03" "07[USENET] ~ ");
-							char* temp = ok_strcat3(tmp, news_entry.from, "\x03 ");
-							free(tmp);
-							int j;
-							int incr = 0;
-							for(j = 0;; j++){
-								if(news_entry.content[j] == 0 || news_entry.content[j] == '\n'){
-									char* line = malloc(j - incr + 1);
-									line[j - incr] = 0;
-									memcpy(line, news_entry.content + incr, j - incr);
-
-									if(strlen(line) > 0){
-										char* msg = ok_strcat(temp, line);
-										ircfw_socket_send_cmd(ok_sock, NULL, msg);
-										free(msg);
-										usleep(1000 * 100); /* Sleep for 100ms */
+						if(ok_news_read(construct) == 0){
+							if(strcmp(news_entry.from, nntpfrom) != 0){
+								char* tmp = ok_strcat3("PRIVMSG ", ircchan, " :\x03" "07[USENET] ~ ");
+								char* temp = ok_strcat3(tmp, news_entry.from, "\x03 ");
+								free(tmp);
+								int j;
+								int incr = 0;
+								for(j = 0;; j++){
+									if(news_entry.content[j] == 0 || news_entry.content[j] == '\n'){
+										char* line = malloc(j - incr + 1);
+										line[j - incr] = 0;
+										memcpy(line, news_entry.content + incr, j - incr);
+	
+										if(strlen(line) > 0){
+											char* msg = ok_strcat(temp, line);
+											ircfw_socket_send_cmd(ok_sock, NULL, msg);
+											free(msg);
+											usleep(1000 * 100); /* Sleep for 100ms */
+										}
+	
+										free(line);
+										incr = j + 1;
+										if(news_entry.content[j] == 0) break;
 									}
-
-									free(line);
-									incr = j + 1;
-									if(news_entry.content[j] == 0) break;
 								}
+								free(temp);
 							}
-							free(temp);
 						}else{
 							fprintf(stderr, "Could not read %s\n", construct);
 						}
