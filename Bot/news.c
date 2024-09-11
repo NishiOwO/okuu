@@ -303,6 +303,8 @@ int ok_news_write(const char* nick, const char* message){
 				send(nt_sock, construct, strlen(construct), 0);
 				sprintf(construct, "Subject: [IRC] Message from %s\r\n", nick);
 				send(nt_sock, construct, strlen(construct), 0);
+				sprintf(construct, "Content-Type: text/plain; charset=UTF-8\r\n", nick);
+				send(nt_sock, construct, strlen(construct), 0);
 				send(nt_sock, "\r\n", 2, 0);
 				char c;
 				int i;
