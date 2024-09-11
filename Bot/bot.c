@@ -29,6 +29,7 @@
 
 extern char* nntppath;
 extern char* nntpcount;
+extern char* nntpfrom;
 
 extern char* ircserver;
 extern char* ircchan;
@@ -142,7 +143,7 @@ void ok_bot(void){
 					}
 					if(count <= atoi(list[i]->d_name)){
 						sprintf(construct, "%s/%s", nntppath, list[i]->d_name);
-						if(ok_news_read(construct) == 0){
+						if(ok_news_read(construct) == 0 && strcmp(news_entry.from, nntpfrom) != 0){
 							char* tmp = ok_strcat3("PRIVMSG ", ircchan, " :\x03" "07[USENET] ~ ");
 							char* temp = ok_strcat3(tmp, news_entry.from, "\x03 ");
 							free(tmp);
