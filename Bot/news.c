@@ -286,6 +286,7 @@ int ok_news_write(const char* nick, const char* message){
 		if(nntppass != NULL){
 			sprintf(construct, "AUTHINFO PASS %s\r\n", nntppass);
 			send(nt_sock, construct, strlen(construct), 0);
+			sta = ok_news_parse(nt_sock);
 			if(sta != 281){
 				goto cleanup;
 			}
@@ -300,7 +301,7 @@ int ok_news_write(const char* nick, const char* message){
 				send(nt_sock, construct, strlen(construct), 0);
 				sprintf(construct, "Newsgroups: %s\r\n", nntpgroup);
 				send(nt_sock, construct, strlen(construct), 0);
-				sprintf(construct, "Subject: Message from %s\r\n", nick);
+				sprintf(construct, "Subject: [IRC] Message from %s\r\n", nick);
 				send(nt_sock, construct, strlen(construct), 0);
 				send(nt_sock, "\r\n", 2, 0);
 				char c;

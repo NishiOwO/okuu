@@ -159,6 +159,7 @@ void ok_bot(void){
 										char* msg = ok_strcat(temp, line);
 										ircfw_socket_send_cmd(ok_sock, NULL, msg);
 										free(msg);
+										usleep(1000 * 100); /* Sleep for 100ms */
 									}
 
 									free(line);
@@ -176,10 +177,12 @@ void ok_bot(void){
 				count = atoi(list[i - 1]->d_name) + 1;
 				free(list);
 			}
-			f = fopen(nntpcount, "wb");
-			if(f != NULL){
-				fwrite(&count, sizeof(count), 1, f);
-				fclose(f);
+			if(sendable){
+				f = fopen(nntpcount, "wb");
+				if(f != NULL){
+					fwrite(&count, sizeof(count), 1, f);
+					fclose(f);
+				}
 			}
 			continue;
 		}
