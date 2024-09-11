@@ -27,12 +27,8 @@
 
 #define OKUU_VERSION "1.00"
 
-extern char* nntpserver;
-extern char* nntpuser;
-extern char* nntppass;
 extern char* nntppath;
 extern char* nntpcount;
-extern int nntpport;
 
 extern char* ircserver;
 extern char* ircchan;
@@ -87,6 +83,14 @@ void ok_bot(void){
 	ok_addr.sin_family = PF_INET;
 	ok_addr.sin_addr.s_addr = inet_addr(ircserver);
 	ok_addr.sin_port = htons(ircport);
+
+	int yes = 1;
+
+	if(setsockopt(ok_sock, IPPROTO_TCP, TCP_NODELAY, (char*)&yes, sizeof(yes)) < 0) {
+		fprintf(stderr, "setsockopt failure");
+		ok_close(ok_sock);
+		return;
+	}
 	
 	if(connect(ok_sock, (struct sockaddr*)&ok_addr, sizeof(ok_addr)) < 0){
 		fprintf(stderr, "Connection failure\n");
@@ -234,6 +238,10 @@ void ok_bot(void){
 						}
 					}else if(sentin[0] == '#'){
 						/* This was sent in channel */
+						if(ok_news_write(nick, msg) != 0){
+							sprintf(construct, "PRIVMSG %s :Could not send the message to the USENET", sentin);
+							ircfw_socket_send_cmd(ok_sock, NULL, construct);
+						}
 					}
 
 					free(nick);

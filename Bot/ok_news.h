@@ -10,6 +10,7 @@ struct news_entry {
 
 void ok_news_init(void);
 int ok_news_read(const char* path);
+int ok_news_write(const char* nick, const char* message);
 
 #ifndef OK_NEWS_SRC
 extern struct news_entry news_entry;

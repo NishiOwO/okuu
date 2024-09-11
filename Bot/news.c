@@ -12,7 +12,26 @@
 #include <stdint.h>
 #include <sys/stat.h>
 
+#include <sys/socket.h>
+#include <netinet/tcp.h>
+#include <arpa/inet.h>
+
+#ifdef __FreeBSD__
+#include <netinet/in.h>
+#endif
+
+extern char* nntpserver;
+extern char* nntpuser;
+extern char* nntppass;
+extern char* nntppath;
+extern char* nntpfrom;
+extern char* nntpgroup;
+extern char* nntpcount;
+extern int nntpport;
+
 struct news_entry news_entry;
+
+void ok_close(int sock);
 
 void ok_news_init(void){
 	news_entry.from = NULL;
@@ -20,7 +39,6 @@ void ok_news_init(void){
 }
 
 int ok_news_read(const char* path){
-
 	if(news_entry.from != NULL){
 		free(news_entry.from);
 		news_entry.from = NULL;
@@ -202,4 +220,121 @@ int ok_news_read(const char* path){
 	}else{
 		return 1;
 	}
+}
+
+int ok_news_parse(int sock){
+	char c;
+	int sta = 0;
+	bool st = false;
+	while(1){
+		if(recv(sock, &c, 1, 0) <= 0){
+			return -1;
+		}
+		if(c == '\n') break;
+		if(!st){
+			if('0' <= c && c <= '9'){
+				sta *= 10;
+				sta += c - '0';
+			}else if(c == ' '){
+				st = true;
+			}
+		}
+	}
+	return sta == 0 ? -1 : sta;
+}
+
+int ok_news_write(const char* nick, const char* message){
+	int nt_sock;
+	struct sockaddr_in nt_addr;
+	if((nt_sock = socket(PF_INET, SOCK_STREAM, 0)) < 0){
+		fprintf(stderr, "Socket creation failure\n");
+		return 1;
+	}
+
+	bzero((char*)&nt_addr, sizeof(nt_addr));
+	nt_addr.sin_family = PF_INET;
+	nt_addr.sin_addr.s_addr = inet_addr(nntpserver);
+	nt_addr.sin_port = htons(nntpport);
+
+	int yes = 1;
+
+	if(setsockopt(nt_sock, IPPROTO_TCP, TCP_NODELAY, (char*)&yes, sizeof(yes)) < 0) {
+		fprintf(stderr, "setsockopt failure");
+		ok_close(nt_sock);
+		return 1;
+	}
+
+	if(connect(nt_sock, (struct sockaddr*)&nt_addr, sizeof(nt_addr)) < 0){
+		fprintf(stderr, "Connection failure\n");
+		ok_close(nt_sock);
+		return 1;
+	}
+
+	int sta;
+
+	sta = ok_news_parse(nt_sock);
+	if(sta == 200 || sta == 201){
+		char construct[1024];
+		if(nntpuser != NULL){
+			sprintf(construct, "AUTHINFO USER %s\r\n", nntpuser);
+			send(nt_sock, construct, strlen(construct), 0);
+			sta = ok_news_parse(nt_sock);
+			if(sta != 381){
+				goto cleanup;
+			}
+		}
+		if(nntppass != NULL){
+			sprintf(construct, "AUTHINFO PASS %s\r\n", nntppass);
+			send(nt_sock, construct, strlen(construct), 0);
+			if(sta != 281){
+				goto cleanup;
+			}
+		}
+		send(nt_sock, "MODE READER\r\n", 4 + 1 + 6 + 2, 0);	
+		sta = ok_news_parse(nt_sock);
+		if(sta == 200 || sta == 201){
+			send(nt_sock, "POST\r\n", 4 + 2, 0);
+			sta = ok_news_parse(nt_sock);
+			if(sta == 340){
+				sprintf(construct, "From: %s\r\n", nntpfrom);
+				send(nt_sock, construct, strlen(construct), 0);
+				sprintf(construct, "Newsgroups: %s\r\n", nntpgroup);
+				send(nt_sock, construct, strlen(construct), 0);
+				sprintf(construct, "Subject: Message from %s\r\n", nick);
+				send(nt_sock, construct, strlen(construct), 0);
+				send(nt_sock, "\r\n", 2, 0);
+				char c;
+				int i;
+				bool first = true;
+				for(i = 0; message[i] != 0; i++){
+					if(message[i] == '\n'){
+						send(nt_sock, "\r\n", 2, 0);
+						first = true;
+					}else{
+						if(first && message[i] == '.'){
+							send(nt_sock, message + i, 1, 0);
+						}
+						send(nt_sock, message + i, 1, 0);
+						first = false;
+					}
+				}
+				if(!first) send(nt_sock, "\r\n", 2, 0);
+				send(nt_sock, ".\r\n", 3, 0);
+				sta = ok_news_parse(nt_sock);
+				if(sta != 240) goto cleanup;
+			}else{
+				goto cleanup;
+			}
+		}else{
+			goto cleanup;
+		}
+	}else{
+		goto cleanup;
+	}
+
+	ok_close(nt_sock);
+	return 0;
+cleanup:
+	ok_close(nt_sock);
+	return 1;
 }

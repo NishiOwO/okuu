@@ -12,6 +12,8 @@ char* nntpserver;
 char* nntpuser;
 char* nntppass;
 char* nntppath;
+char* nntpgroup;
+char* nntpfrom;
 char* nntpcount;
 int nntpport = 119;
 
@@ -30,7 +32,9 @@ int main(){
 	nntpuser = getenv("NNTPUSER");
 	nntppass = getenv("NNTPPASS");
 	nntppath = getenv("NNTPPATH");
+	nntpgroup = getenv("NNTPGROUP");
 	nntpcount = getenv("NNTPCOUNT");
+	nntpfrom = getenv("NNTPFROM");
 	ircserver = getenv("IRCSERVER");
 	ircchan = getenv("IRCCHAN");
 	ircuser = getenv("IRCUSER");
@@ -54,6 +58,14 @@ int main(){
 	}
 	if(nntpcount == NULL){
 		fprintf(stderr, "Set NNTPCOUNT\n");
+		bad = true;
+	}
+	if(nntpfrom == NULL){
+		fprintf(stderr, "Set NNTPFROM\n");
+		bad = true;
+	}
+	if(nntpgroup == NULL){
+		fprintf(stderr, "Set NNTPGROUP\n");
 		bad = true;
 	}
 	if(ircserver == NULL){
