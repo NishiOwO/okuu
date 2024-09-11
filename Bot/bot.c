@@ -42,7 +42,7 @@ extern int ircport;
 int ok_sock;
 struct sockaddr_in ok_addr;
 
-void ok_close(int sock) { close(sock); }
+void ok_close(int sock) { shutdown(sock, SHUT_RDWR);close(sock); }
 
 void ok_bot_kill(int sig) {
 	fprintf(stderr, "Shutdown\n");
