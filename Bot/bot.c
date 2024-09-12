@@ -44,7 +44,9 @@ int ok_sock;
 struct sockaddr_in ok_addr;
 
 void ok_close(int sock) {
+	char c;
 	while(close(sock) == 0);
+	while(recv(sock, &c, 1, 0) > 0);
 }
 
 void ok_bot_kill(int sig) {
@@ -247,6 +249,7 @@ void ok_bot(void) {
 						pid_t pid = fork();
 						int code;
 						if(pid == 0){
+							close(ok_sock);
 							_exit(ok_news_write(nick, msg));
 						}else{
 							int status;
