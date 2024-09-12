@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <sys/stat.h>
+#include <errno.h>
 
 #include <sys/socket.h>
 #include <netinet/tcp.h>
@@ -250,7 +251,7 @@ int ok_news_write(const char* nick, const char* message) {
 	int nt_sock;
 	struct sockaddr_in nt_addr;
 	if((nt_sock = socket(PF_INET, SOCK_STREAM, 0)) < 0) {
-		fprintf(stderr, "Socket creation failure\n");
+		fprintf(stderr, "Socket creation failure: %s\n", strerror(errno));
 		return 1;
 	}
 

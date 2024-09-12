@@ -16,6 +16,7 @@
 #include <stdbool.h>
 #include <dirent.h>
 #include <poll.h>
+#include <sys/wait.h>
 
 #include <sys/socket.h>
 #include <netinet/tcp.h>
@@ -42,7 +43,9 @@ extern int ircport;
 int ok_sock;
 struct sockaddr_in ok_addr;
 
-void ok_close(int sock) { shutdown(sock, SHUT_RDWR);close(sock); }
+void ok_close(int sock) {
+	while(close(sock) == 0);
+}
 
 void ok_bot_kill(int sig) {
 	fprintf(stderr, "Shutdown\n");
@@ -241,7 +244,16 @@ void ok_bot(void) {
 						}
 					} else if(sentin[0] == '#') {
 						/* This was sent in channel */
-						if(ok_news_write(nick, msg) != 0) {
+						pid_t pid = fork();
+						int code;
+						if(pid == 0){
+							_exit(ok_news_write(nick, msg));
+						}else{
+							int status;
+							waitpid(pid, &status, 0);
+							code = WEXITSTATUS(status);
+						}
+						if(code != 0) {
 							sprintf(construct, "PRIVMSG %s :Could not send the message to the USENET", sentin);
 							ircfw_socket_send_cmd(ok_sock, NULL, construct);
 						}
