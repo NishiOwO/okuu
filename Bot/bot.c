@@ -101,7 +101,7 @@ void ok_bot(void) {
 	signal(SIGINT, ok_bot_kill);
 	signal(SIGTERM, ok_bot_kill);
 
-	char* construct = malloc(1025);
+	char* construct = malloc(4097);
 
 	if(ircpass != NULL && strlen(ircpass) > 0) {
 		sprintf(construct, "PASS :%s", ircpass);
@@ -135,8 +135,9 @@ void ok_bot(void) {
 			int n = scandir(nntppath, &list, nodots, namesort);
 			if(n >= 0) {
 				int i;
+				uint64_t last = 0;
 				for(i = 0; i < n; i++) {
-					if(!sendable) {
+					if(!sendable || strcmp(list[i]->d_name, ".") == 0 || strcmp(list[i]->d_name, "..") == 0) {
 						free(list[i]);
 						continue;
 					}
@@ -175,9 +176,10 @@ void ok_bot(void) {
 							fprintf(stderr, "Could not read %s\n", construct);
 						}
 					}
+					last = atoi(list[i]->d_name) + 1;
 					free(list[i]);
 				}
-				count = atoi(list[i - 1]->d_name) + 1;
+				count = last;
 				free(list);
 			}
 			if(sendable) {
@@ -208,7 +210,7 @@ void ok_bot(void) {
 				fprintf(stderr, "Login successful\n");
 				sprintf(construct, "JOIN :%s", ircchan);
 				ircfw_socket_send_cmd(ok_sock, NULL, construct);
-			} else if(res == 331 || res == 332) {
+			} else if(res == 366) {
 				sendable = true;
 			}
 		} else {

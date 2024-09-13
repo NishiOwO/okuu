@@ -54,7 +54,11 @@ int ok_news_read(const char* path) {
 		char* boundary = NULL;
 		char* buffer = malloc(s.st_size + 1);
 		buffer[s.st_size] = 0;
-		FILE* f = fopen(path, "r");
+		FILE* f = fopen(path, "rb");
+		if(f == NULL){
+			free(buffer);
+			return 1;
+		}
 		fread(buffer, s.st_size, 1, f);
 
 		uint64_t i;
@@ -219,6 +223,7 @@ int ok_news_read(const char* path) {
 		free(l);
 
 		free(buffer);
+		fclose(f);
 		if(boundary != NULL) free(boundary);
 		return 0;
 	} else {
